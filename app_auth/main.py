@@ -1,26 +1,63 @@
+# -*- coding: utf-8 -*-
+"""Main file to start FastAPI application."""
+import logging.config
 import os
-from pydantic import BaseSettings
+from contextlib import asynccontextmanager
+import uvicorn
+from fastapi import FastAPI
+import asyncio
+from routers import auth_router, user_router
+from sql import models, database
+from sql import init_db 
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+# Configure logging
+logging.config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"))
+logger = logging.getLogger(__name__)
+
+# App Lifespan
+@asynccontextmanager
+async def lifespan(__app: FastAPI):
+    """Lifespan context manager."""
+    try:
+        logger.info("Starting up")
+
+        try:
+            logger.info("Creating database tables")
+            async with database.engine.begin() as conn:
+                await conn.run_sync(models.Base.metadata.create_all)
+        except Exception:
+            logger.error("Could not create tables at startup")
+
+        # 🔧 Inicializar roles y admin
+        async_session = async_sessionmaker(database.engine, expire_on_commit=False)
+        async with async_session() as session:
+            await init_db(session)
+
+        yield
+    finally:
+        logger.info("Shutting down database")
+        await database.engine.dispose()
 
 
-class Settings(BaseSettings):
-    # Base de datos
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./auth.db")
+# OpenAPI Documentation
+APP_VERSION = os.getenv("APP_VERSION", "2.0.0")
+logger.info("Running app version %s", APP_VERSION)
 
+app = FastAPI(
+    redoc_url=None,
+    title="FastAPI - Monolithic app",
+    version=APP_VERSION,
+    servers=[{"url": "/", "description": "Development"}],
+    license_info={
+        "name": "MIT License",
+        "url": "https://choosealicense.com/licenses/mit/",
+    },
+    lifespan=lifespan,
+)
 
-    # JWT y seguridad
-    JWT_EXP_MINUTES: int = int(os.getenv("JWT_EXP_MINUTES", 60))
-    PRIVATE_KEY_PATH: str = os.getenv("PRIVATE_KEY_PATH", "private.pem")
-    PUBLIC_KEY_PATH: str = os.getenv("PUBLIC_KEY_PATH", "public.pem")
+app.include_router(auth_router.router)
+app.include_router(user_router.router)
 
-
-    # Usuario administrador inicial
-    ADMIN_USERNAME: str = os.getenv("ADMIN_USERNAME", "admin")
-    ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "adminpass")
-
-
-class Config:
-    env_file = ".env"
-    env_file_encoding = "utf-8"
-
-
-settings = Settings()
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=5010, reload=True)

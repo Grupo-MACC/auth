@@ -1,13 +1,12 @@
 import os
-from pydantic import BaseSettings
 
 
-class Settings(BaseSettings):
+class Settings():
     # Base de datos
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./auth.db")
 
     # JWT y seguridad
-    JWT_EXP_MINUTES: int = int(os.getenv("JWT_EXP_MINUTES", 60))
+    JWT_EXP_MINUTES: int = int(os.getenv("JWT_EXP_MINUTES", 15))
     PRIVATE_KEY_PATH: str = os.getenv("PRIVATE_KEY_PATH", "private.pem")
     PUBLIC_KEY_PATH: str = os.getenv("PUBLIC_KEY_PATH", "public.pem")
     ALGORITHM: str = "RS256"

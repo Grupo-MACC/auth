@@ -1,34 +1,20 @@
-"""
-core/security.py
-Módulo de seguridad para el Auth Service.
-Incluye:
-- Generación y carga de claves RSA (private/public)
-- Creación y validación de tokens JWT (RS256)
-- Hashing y verificación de contraseñas con bcrypt
-"""
-
 import os
+from datetime import datetime, timedelta, timezone
 import jwt
-from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from core.config import settings
 
 
-# ---------------------- Hashing ----------------------
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
-
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
-
-# ---------------------- Claves RSA ----------------------
 def ensure_rsa_keys():
     private_path = settings.PRIVATE_KEY_PATH
     public_path = settings.PUBLIC_KEY_PATH
@@ -40,7 +26,6 @@ def ensure_rsa_keys():
             public_pem = f.read()
         return private_pem, public_pem
 
-    # Generar nuevo par de claves
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     private_pem = key.private_bytes(
         encoding=serialization.Encoding.PEM,
@@ -71,17 +56,35 @@ def ensure_rsa_keys():
 PRIVATE_PEM, PUBLIC_PEM = ensure_rsa_keys()
 
 
-# ---------------------- JWT helpers ----------------------
-def create_access_token(subject: str, roles: list[str], expires_delta: timedelta | None = None) -> str:
-    now = datetime.now()
+def create_access_token(subject: str, rol: str, expires_delta: timedelta | None = None) -> str:
+    now = datetime.now(timezone.utc)
     if expires_delta is None:
         expires_delta = timedelta(minutes=settings.JWT_EXP_MINUTES)
 
     payload = {
         "sub": subject,
-        "roles": roles,
+        "rol": rol,
         "iat": now,
         "exp": now + expires_delta,
+    }
+
+    token = jwt.encode(payload, PRIVATE_PEM, algorithm=settings.ALGORITHM)
+    return token
+
+def create_refresh_token(subject: str, rol: str, expires_delta: timedelta | None = None) -> str:
+    """
+    Crea un refresh token JWT firmado (RS256)
+    """
+    now = datetime.now(timezone.utc)
+    if expires_delta is None:
+        expires_delta = timedelta(days=7)
+
+    payload = {
+        "sub": subject,
+        "rol": rol,
+        "iat": now,
+        "exp": now + expires_delta,
+        "type": "refresh",
     }
 
     token = jwt.encode(payload, PRIVATE_PEM, algorithm=settings.ALGORITHM)
@@ -94,5 +97,14 @@ def decode_token(token: str) -> dict:
         return payload
     except jwt.ExpiredSignatureError:
         raise ValueError("Token expired")
-    except jwt.PyJWTError:
-        raise ValueError("Invalid token")
+    except jwt.InvalidSignatureError:
+        raise ValueError("Invalid signature – check your RSA keys")
+    except jwt.InvalidAlgorithmError:
+        raise ValueError("Algorithm mismatch – check settings.ALGORITHM")
+    except jwt.DecodeError:
+        raise ValueError("Malformed token")
+    except Exception as e:
+        raise ValueError(f"Unexpected error decoding token: {str(e)}")
+
+def read_public_key() -> str | None:
+    return PUBLIC_PEM

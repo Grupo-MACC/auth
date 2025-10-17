@@ -29,5 +29,5 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: int
-    role: RoleResponse
+    role_id: int
     model_config = ConfigDict(from_attributes=True)
