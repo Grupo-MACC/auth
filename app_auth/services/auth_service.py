@@ -36,12 +36,14 @@ async def login_service(username: str, password: str):
             # Crear tokens
             access_token = create_access_token(
                 subject=user.username,
+                user_id=user.id,
                 rol=rol_name,
                 expires_delta=timedelta(minutes=15),
             )
 
             refresh_token = create_refresh_token(
                 subject=user.username,
+                user_id=user.id,
                 rol=rol_name,
                 expires_delta=timedelta(days=7),
             )

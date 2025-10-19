@@ -56,13 +56,14 @@ def ensure_rsa_keys():
 PRIVATE_PEM, PUBLIC_PEM = ensure_rsa_keys()
 
 
-def create_access_token(subject: str, rol: str, expires_delta: timedelta | None = None) -> str:
+def create_access_token(subject: str, user_id: str, rol: str, expires_delta: timedelta | None = None) -> str:
     now = datetime.now(timezone.utc)
     if expires_delta is None:
         expires_delta = timedelta(minutes=settings.JWT_EXP_MINUTES)
 
     payload = {
         "sub": subject,
+        "user_id": user_id,
         "rol": rol,
         "iat": now,
         "exp": now + expires_delta,
@@ -71,7 +72,7 @@ def create_access_token(subject: str, rol: str, expires_delta: timedelta | None 
     token = jwt.encode(payload, PRIVATE_PEM, algorithm=settings.ALGORITHM)
     return token
 
-def create_refresh_token(subject: str, rol: str, expires_delta: timedelta | None = None) -> str:
+def create_refresh_token(subject: str, user_id: str, rol: str, expires_delta: timedelta | None = None) -> str:
     """
     Crea un refresh token JWT firmado (RS256)
     """
@@ -81,6 +82,7 @@ def create_refresh_token(subject: str, rol: str, expires_delta: timedelta | None
 
     payload = {
         "sub": subject,
+        "user_id": user_id,
         "rol": rol,
         "iat": now,
         "exp": now + expires_delta,

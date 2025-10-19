@@ -10,6 +10,7 @@ from routers import auth_router, user_router
 from sql import models, database
 from sql import init_db 
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from broker import setup_rabbitmq, auth_broker_service
 
 # Configure logging
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"))
@@ -33,12 +34,24 @@ async def lifespan(__app: FastAPI):
         async_session = async_sessionmaker(database.engine, expire_on_commit=False)
         async with async_session() as session:
             await init_db(session)
-
+            
+        try:
+            await setup_rabbitmq.setup_rabbitmq()
+        except Exception as e:
+            logger.error(f"Error configurando RabbitMQ: {e}")
+        
+        try:
+            await auth_broker_service.publish_auth_status("running")
+        except Exception as e:
+            logger.warning(f"Could not publish 'running' status: {e}")
         yield
     finally:
         logger.info("Shutting down database")
         await database.engine.dispose()
-
+        try:
+            await auth_broker_service.publish_auth_status("not_running")
+        except Exception as e:
+            logger.warning(f"Could not publish 'not_running' status: {e}")
 
 # OpenAPI Documentation
 APP_VERSION = os.getenv("APP_VERSION", "2.0.0")
@@ -60,4 +73,4 @@ app.include_router(auth_router.router)
 app.include_router(user_router.router)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=5010, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=5004, reload=True)
