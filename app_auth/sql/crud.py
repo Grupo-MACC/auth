@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Functions that interact with the database."""
 import logging
-from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from . import models, schemas
@@ -29,6 +28,16 @@ async def get_user_by_username(db: AsyncSession, username):
 
 async def get_role(db: AsyncSession, role_id):
     return await get_element_by_id(db, models.Role, role_id)
+
+def update_user(db: AsyncSession, user_id: int, user_update: schemas.UserUpdate):
+    db_user = get_user(db, user_id)
+    if db_user:
+        db_user.username = user_update.username
+        db_user.role_id = user_update.role_id
+        db_user.role = get_role(db, user_update.role_id)
+        db.commit()
+        db.refresh(db_user)
+    return db_user
 
 # Generic functions ################################################################################
 # READ
