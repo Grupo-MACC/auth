@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, Literal
+from datetime import datetime
 
 class Message(BaseModel):
     detail: Optional[str] = Field(example="error or success message")
@@ -33,3 +34,26 @@ class UserResponse(UserBase):
     
 class UserUpdate(UserResponse):
     pass
+
+class RefreshRequest(BaseModel):
+    refresh_token_str: str
+
+class RefreshTokenBase(BaseModel):
+    token: str
+    expires_at: datetime
+    revoked: bool = Field(default=False)
+
+
+class RefreshTokenCreate(BaseModel):
+    user_id: int
+    token: str
+    expires_at: datetime
+
+
+class RefreshTokenResponse(RefreshTokenBase):
+    id: int
+    user_id: int
+    creation_date: Optional[datetime] = None
+    update_date: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)

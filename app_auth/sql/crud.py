@@ -4,6 +4,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from . import models, schemas
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,48 @@ def update_user(db: AsyncSession, user_id: int, user_update: schemas.UserUpdate)
         db.commit()
         db.refresh(db_user)
     return db_user
+
+async def create_refresh_token_from_schema(db: AsyncSession, refresh_token: schemas.RefreshTokenCreate):
+    db_refresh_token = models.RefreshToken(
+        user_id=refresh_token.user_id,
+        token=refresh_token.token,
+        expires_at=refresh_token.expires_at
+    )
+    db.add(db_refresh_token)
+    await db.commit()
+    await db.refresh(db_refresh_token)
+    return db_refresh_token
+
+async def get_refresh_token(db: AsyncSession, token_str: str) -> models.RefreshToken | None:
+    """Retrieve a refresh token by its token string."""
+    result = await db.execute(
+        select(models.RefreshToken).where(models.RefreshToken.token == token_str)
+    )
+    return result.scalar_one_or_none()
+
+async def revoke_refresh_token(db: AsyncSession, token_str: str) -> bool:
+    """Revoke a specific refresh token."""
+    result = await db.execute(
+        select(models.RefreshToken).where(models.RefreshToken.token == token_str)
+    )
+    token = result.scalar_one_or_none()
+    if not token:
+        return False
+
+    token.revoked = True
+    await db.commit()
+    return True
+
+async def validate_refresh_token(db: AsyncSession, token_str: str) -> models.User | None:
+    """Validate if a refresh token is active and not expired."""
+    token = await get_refresh_token(db, token_str)
+    if not token:
+        return None
+    if token.revoked or token.expires_at < datetime.now(timezone.utc):
+        return None
+    return token.user
+
+
 
 # Generic functions ################################################################################
 # READ

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 echo "Service: ${SERVICE_NAME}"
 IP=$(hostname -i)
@@ -14,10 +15,15 @@ terminate() {
 
 trap terminate SIGTERM SIGINT
 
+echo "Starting Uvicorn with TLS (mTLS enforced)..."
+
 uvicorn app_auth.main:app \
   --host 0.0.0.0 \
-  --port 5004 &
+  --port 5004 \
+  --ssl-keyfile /certs/auth/auth-key.pem \
+  --ssl-certfile /certs/auth/auth-cert.pem \
+  --ssl-ca-certs /certs/ca.pem \
+  --ssl-cert-reqs 2 &
 
 UVICORN_PID=$!
-
 wait "$UVICORN_PID"

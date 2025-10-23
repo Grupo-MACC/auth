@@ -5,6 +5,7 @@ from passlib.context import CryptContext
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from core.config import settings
+import secrets
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -72,27 +73,10 @@ def create_access_token(subject: str, user_id: str, rol: str, expires_delta: tim
     token = jwt.encode(payload, PRIVATE_PEM, algorithm=settings.ALGORITHM)
     return token
 
-def create_refresh_token(subject: str, user_id: str, rol: str, expires_delta: timedelta | None = None) -> str:
-    """
-    Crea un refresh token JWT firmado (RS256)
-    """
-    now = datetime.now(timezone.utc)
-    if expires_delta is None:
-        expires_delta = timedelta(days=7)
 
-    payload = {
-        "sub": subject,
-        "user_id": user_id,
-        "rol": rol,
-        "iat": now,
-        "exp": now + expires_delta,
-        "type": "refresh",
-    }
-
-    token = jwt.encode(payload, PRIVATE_PEM, algorithm=settings.ALGORITHM)
-    return token
-
-
+def create_refresh_token():
+    return secrets.token_urlsafe(64)
+        
 def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, PUBLIC_PEM, algorithms=[settings.ALGORITHM])

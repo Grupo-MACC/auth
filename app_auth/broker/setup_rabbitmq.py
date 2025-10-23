@@ -1,7 +1,7 @@
 from aio_pika import connect_robust, ExchangeType
 
 RABBITMQ_HOST = "amqp://guest:guest@rabbitmq/"
-EXCHANGE_NAME = "auth_active_exchange"
+EXCHANGE_NAME = "broker"
 
 async def setup_rabbitmq():
     """
@@ -13,7 +13,7 @@ async def setup_rabbitmq():
     
     exchange = await channel.declare_exchange(
         EXCHANGE_NAME,
-        ExchangeType.DIRECT,
+        ExchangeType.TOPIC,
         durable=True
     )
     

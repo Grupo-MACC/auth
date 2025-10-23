@@ -43,7 +43,7 @@ async def lifespan(__app: FastAPI):
         try:
             await auth_broker_service.publish_auth_status("running")
         except Exception as e:
-            logger.warning(f"Could not publish 'running' status: {e}")
+            logger.error(f"Could not publish 'running' status: {e}")
         yield
     finally:
         logger.info("Shutting down database")
@@ -51,7 +51,7 @@ async def lifespan(__app: FastAPI):
         try:
             await auth_broker_service.publish_auth_status("not_running")
         except Exception as e:
-            logger.warning(f"Could not publish 'not_running' status: {e}")
+            logger.error(f"Could not publish 'not_running' status: {e}")
 
 # OpenAPI Documentation
 APP_VERSION = os.getenv("APP_VERSION", "2.0.0")

@@ -18,7 +18,7 @@ async def publish_auth_status(status: str):
         channel = await connection.channel()
         exchange = await channel.declare_exchange(
             EXCHANGE_NAME,
-            ExchangeType.DIRECT,
+            ExchangeType.TOPIC,
             durable=True
         )
 
