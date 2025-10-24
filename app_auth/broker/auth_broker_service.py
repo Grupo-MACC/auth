@@ -1,9 +1,7 @@
-import asyncio
 import json
 import logging
 from microservice_chassis_grupo2.core.rabbitmq_core import get_channel, declare_exchange
 from aio_pika import Message
-from broker.setup_rabbitmq import RABBITMQ_HOST, EXCHANGE_NAME
 
 logger = logging.getLogger(__name__)
 
