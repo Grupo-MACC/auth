@@ -35,10 +35,10 @@ async def lifespan(__app: FastAPI):
         async with async_session() as session:
             await init_db(session)
             
-        try:
+        '''try:
             await setup_rabbitmq.setup_rabbitmq()
         except Exception as e:
-            logger.error(f"Error configurando RabbitMQ: {e}")
+            logger.error(f"Error configurando RabbitMQ: {e}")'''
         
         try:
             await auth_broker_service.publish_auth_status("running")
@@ -59,7 +59,6 @@ logger.info("Running app version %s", APP_VERSION)
 
 app = FastAPI(
     redoc_url=None,
-    title="FastAPI - Monolithic app",
     version=APP_VERSION,
     servers=[{"url": "/", "description": "Development"}],
     license_info={

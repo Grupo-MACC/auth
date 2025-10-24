@@ -14,3 +14,4 @@ aio_pika
 PyJWT
 passlib
 cryptography
+microservice-chassis-grupo2

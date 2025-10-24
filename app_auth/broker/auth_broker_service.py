@@ -1,7 +1,8 @@
 import asyncio
 import json
 import logging
-from aio_pika import connect_robust, Message, ExchangeType
+from microservice_chassis_grupo2.core.rabbitmq_core import get_channel, declare_exchange
+from aio_pika import Message
 from broker.setup_rabbitmq import RABBITMQ_HOST, EXCHANGE_NAME
 
 logger = logging.getLogger(__name__)
@@ -14,13 +15,9 @@ async def publish_auth_status(status: str):
     assert status in ("running", "not_running"), "Estado no válido"
 
     try:
-        connection = await connect_robust(RABBITMQ_HOST)
-        channel = await connection.channel()
-        exchange = await channel.declare_exchange(
-            EXCHANGE_NAME,
-            ExchangeType.TOPIC,
-            durable=True
-        )
+        connection, channel = await get_channel()
+        
+        exchange = await declare_exchange(channel)
 
         message_body = {
             "service": "auth",
