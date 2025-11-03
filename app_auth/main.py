@@ -10,7 +10,7 @@ from routers import auth_router, user_router
 from sql import models, database
 from sql import init_db 
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from broker import setup_rabbitmq, auth_broker_service
+from broker import auth_broker_service
 
 # Configure logging
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"))

@@ -23,7 +23,7 @@ uvicorn app_auth.main:app \
   --ssl-keyfile /certs/auth/auth-key.pem \
   --ssl-certfile /certs/auth/auth-cert.pem \
   --ssl-ca-certs /certs/ca.pem \
-  --ssl-cert-reqs 2 &
+  --ssl-cert-reqs 1 &
 
 UVICORN_PID=$!
 wait "$UVICORN_PID"

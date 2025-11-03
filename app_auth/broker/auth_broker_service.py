@@ -38,3 +38,29 @@ async def publish_auth_status(status: str):
     finally:
         if 'connection' in locals():
             await connection.close()
+
+async def publish_user_registered(user_id: str):
+    try:
+        connection, channel = await get_channel()
+        
+        exchange = await declare_exchange(channel)
+        
+        message_body = {
+            "message": "User has been created",
+            "user_id": user_id
+        }
+        
+        message = Message(
+            body=json.dumps(message_body).encode(),
+            content_type="application/json",
+            delivery_mode=2
+        )
+        
+        routing_key = "user.created"
+        await exchange.publish(message, routing_key)
+        logger.info(f"📢 Enviado mensaje a RabbitMQ: {message_body}")
+    except Exception as e:
+        logger.error(f"❌ Error al publicar la creacion de un nuevo usuario: {e}")
+    finally:
+        if "connection" in locals():
+            await connection.close()

@@ -3,6 +3,7 @@ from dependencies import get_db
 from fastapi import status, HTTPException
 from core.security import get_password_hash
 from typing import List
+from broker import auth_broker_service
 
 async def register_user_service(new_user: schemas.UserCreate) -> schemas.UserResponse:
     try:
@@ -13,6 +14,8 @@ async def register_user_service(new_user: schemas.UserCreate) -> schemas.UserRes
             hashed_pw = get_password_hash(new_user.password)
             new_user.password = hashed_pw
             db_user = await crud.create_user_from_schema(db=db, user=new_user)
+            if db_user:
+                await auth_broker_service.publish_user_registered(db_user.id)
             user_response = schemas.UserResponse(
                 username=db_user.username,
                 id=db_user.id,
