@@ -21,6 +21,12 @@ ENV MACHINE_SERVICE=https://machine
 ENV DELIVERY_SERVICE=https://delivery
 ENV PAYMENT_SERVICE=https://payment
 ENV AUTH_SERVICE=https://auth
+# Consul Service Discovery
+ENV CONSUL_HOST=consul
+ENV CONSUL_PORT=8500
+ENV SERVICE_NAME=auth
+ENV SERVICE_PORT=5004
+ENV SERVICE_ID=auth-1
 
 
 # Create a non root user
