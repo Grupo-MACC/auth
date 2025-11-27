@@ -11,11 +11,15 @@ async def publish_auth_status(status: str):
     status: puede ser 'running' o 'not_running'
     """
     assert status in ("running", "not_running"), "Estado no válido"
-
+    
+    connection = None
     try:
+        print(f"[AUTH_BROKER] Conectando a RabbitMQ para publicar {status}...")
         connection, channel = await get_channel()
+        print(f"[AUTH_BROKER] Conexión establecida, declarando exchange...")
         
         exchange = await declare_exchange(channel)
+        print(f"[AUTH_BROKER] Exchange declarado, preparando mensaje...")
 
         message_body = {
             "service": "auth",
@@ -33,10 +37,13 @@ async def publish_auth_status(status: str):
         await exchange.publish(message, routing_key=routing_key)
 
         logger.info(f"📢 Enviado mensaje a RabbitMQ: {message_body}")
+        print(f"[AUTH_BROKER] ✅ Mensaje publicado: {routing_key}")
     except Exception as e:
         logger.error(f"❌ Error al publicar estado de auth: {e}")
+        print(f"[AUTH_BROKER] ❌ Error: {e}")
+        raise
     finally:
-        if 'connection' in locals():
+        if connection:
             await connection.close()
 
 async def publish_user_registered(user_id: str):

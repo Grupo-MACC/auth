@@ -15,7 +15,9 @@ ENV SQLALCHEMY_DATABASE_URL=sqlite+aiosqlite:///./auth.db
 ENV RABBITMQ_USER=guest
 ENV RABBITMQ_PASSWORD=guest
 ENV RABBITMQ_HOST=rabbitmq
-ENV PUBLIC_KEY_PATH=/home/pyuser/code/auth_public.pem
+# Claves RSA compartidas entre réplicas (volumen Docker)
+ENV PRIVATE_KEY_PATH=/home/pyuser/keys/private.pem
+ENV PUBLIC_KEY_PATH=/home/pyuser/keys/public.pem
 ENV ORDER_SERVICE=https://order
 ENV MACHINE_SERVICE=https://machine
 ENV DELIVERY_SERVICE=https://delivery
@@ -26,11 +28,12 @@ ENV CONSUL_HOST=consul
 ENV CONSUL_PORT=8500
 ENV SERVICE_NAME=auth
 ENV SERVICE_PORT=5004
-ENV SERVICE_ID=auth-1
+# SERVICE_ID se genera dinámicamente en main.py con UUID para cada réplica
 
 
-# Create a non root user
+# Create a non root user and keys directory
 RUN useradd -u 1000 -d /home/pyuser -m pyuser && \
+    mkdir -p /home/pyuser/keys && \
     chown -R pyuser:pyuser /home/pyuser
 
 # Copy the entrypoint script (executed when the container starts) and add execution permissions

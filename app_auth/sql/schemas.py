@@ -5,6 +5,11 @@ from datetime import datetime
 class Message(BaseModel):
     detail: Optional[str] = Field(example="error or success message")
 
+class HealthResponse(BaseModel):
+    detail: str = Field(example="OK")
+    replica: str = Field(example="compose-repo-auth-1")
+    ip: str = Field(example="172.18.0.5")
+
 class RoleBase(BaseModel):
     name: str
     description: str | None = None

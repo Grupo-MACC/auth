@@ -2,6 +2,8 @@
 """Main file to start FastAPI application."""
 import logging.config
 import os
+import socket
+import uuid
 from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
@@ -17,27 +19,39 @@ from consul_client import create_consul_client
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"))
 logger = logging.getLogger(__name__)
 
+def get_container_ip():
+    """Get the container's IP address."""
+    try:
+        hostname = socket.gethostname()
+        return socket.gethostbyname(hostname)
+    except Exception:
+        return "127.0.0.1"
+
 # App Lifespan
 @asynccontextmanager
 async def lifespan(__app: FastAPI):
     """Lifespan context manager."""
     consul_client = create_consul_client()
-    service_id = os.getenv("SERVICE_ID", "auth-1")
+    # Generar ID único para cada réplica
+    service_id = os.getenv("SERVICE_ID", f"auth-{uuid.uuid4().hex[:8]}")
     service_name = os.getenv("SERVICE_NAME", "auth")
     service_port = int(os.getenv("SERVICE_PORT", 5004))
+    # Obtener IP real del contenedor para Consul
+    container_ip = get_container_ip()
 
     try:
-        logger.info("Starting up")
+        logger.info(f"Starting up replica {service_id} at {container_ip}")
         
-        # Register with Consul
+        # Register with Consul using container IP
         result = await consul_client.register_service(
+    
             service_name=service_name,
             service_id=service_id,
             service_port=service_port,
-            service_address=service_name,  # Docker DNS
+            service_address=container_ip,  # IP real del contenedor
             tags=["fastapi", service_name],
             meta={"version": "2.0.0"},
-            health_check_url=f"http://{service_name}:{service_port}/docs"
+            health_check_url=f"http://{container_ip}:{service_port}/docs"
         )
         logger.info(f"✅ Consul service registration: {result}")
 
@@ -59,9 +73,11 @@ async def lifespan(__app: FastAPI):
             logger.error(f"Error configurando RabbitMQ: {e}")'''
         
         try:
+            logger.info("📤 Intentando publicar auth.running...")
             await auth_broker_service.publish_auth_status("running")
+            logger.info("✅ Mensaje auth.running publicado correctamente")
         except Exception as e:
-            logger.error(f"Could not publish 'running' status: {e}")
+            logger.error(f"❌ Could not publish 'running' status: {e}", exc_info=True)
         yield
     finally:
         logger.info("Shutting down database")

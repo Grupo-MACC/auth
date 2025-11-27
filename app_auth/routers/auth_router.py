@@ -1,4 +1,6 @@
 import logging
+import socket
+import os
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi import APIRouter, Depends
 from dependencies import get_current_user
@@ -17,13 +19,17 @@ security = HTTPBasic()
 @router.get(
     "/health",
     summary="Health check endpoint",
-    response_model=schemas.Message,
+    response_model=schemas.HealthResponse,
 )
 async def health_check():
     """Endpoint to check if everything started correctly."""
     logger.debug("GET '/auth/health' endpoint called.")
+    hostname = socket.gethostname()
+    ip_address = socket.gethostbyname(hostname)
     return {
-        "detail": "OK"
+        "detail": "OK",
+        "replica": hostname,
+        "ip": ip_address
     }
 
 @router.post("/login", summary="Login con Basic Auth", response_model=dict)
