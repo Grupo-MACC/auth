@@ -27,25 +27,8 @@ async def lifespan(__app: FastAPI):
     service_id = os.getenv("SERVICE_ID", f"auth-{uuid.uuid4().hex[:8]}")
     service_name = os.getenv("SERVICE_NAME", "auth")
     service_port = int(os.getenv("SERVICE_PORT", 5004))
-    # Obtener IP real del contenedor para Consul
-    container_ip = get_container_ip()
 
     try:
-        logger.info(f"Starting up replica {service_id} at {container_ip}")
-        
-        # Register with Consul using container IP
-        result = await consul_client.register_service(
-    
-            service_name=service_name,
-            service_id=service_id,
-            service_port=service_port,
-            service_address=container_ip,  # IP real del contenedor
-            tags=["fastapi", service_name],
-            meta={"version": "2.0.0"},
-            health_check_url=f"http://{container_ip}:{service_port}/docs"
-        )
-        logger.info(f"✅ Consul service registration: {result}")
-
         try:
             logger.info("Creating database tables")
             async with database.engine.begin() as conn:
