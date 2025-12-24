@@ -13,19 +13,10 @@ from sql import models, database
 from sql import init_db 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from broker import auth_broker_service
-from consul_client import create_consul_client
-
+from microservice_chassis_grupo2.core.consul import create_consul_client
 # Configure logging
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"))
 logger = logging.getLogger(__name__)
-
-def get_container_ip():
-    """Get the container's IP address."""
-    try:
-        hostname = socket.gethostname()
-        return socket.gethostbyname(hostname)
-    except Exception:
-        return "127.0.0.1"
 
 # App Lifespan
 @asynccontextmanager
