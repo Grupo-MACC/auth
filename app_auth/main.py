@@ -62,8 +62,8 @@ async def lifespan(__app: FastAPI):
             logger.error(f"Could not publish 'not_running' status: {e}")
         
         # Deregister from Consul
-        result = await consul_client.deregister_service(service_id)
-        logger.info(f"✅ Consul service deregistration: {result}")
+        #result = await consul_client.deregister_service(service_id)
+        #logger.info(f"✅ Consul service deregistration: {result}")
 
 # OpenAPI Documentation
 APP_VERSION = os.getenv("APP_VERSION", "2.0.0")
