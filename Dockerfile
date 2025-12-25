@@ -21,10 +21,9 @@ ENV PUBLIC_KEY_PATH=/home/pyuser/keys/public.pem
 # Consul Service Discovery
 ENV CONSUL_HOST=10.0.11.40
 ENV CONSUL_PORT=8500
-#ENV SERVICE_NAME=auth
-#ENV SERVICE_PORT=5004
-#ENV SERVICE_ID=auth
-# SERVICE_ID se genera dinámicamente en main.py con UUID para cada réplica
+ENV SERVICE_NAME=auth
+ENV SERVICE_PORT=5004
+ENV SERVICE_ID=auth
 
 
 # Create a non root user and keys directory
