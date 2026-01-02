@@ -59,8 +59,9 @@ async def lifespan(__app: FastAPI):
             logger.info("Creating database tables")
             async with database.engine.begin() as conn:
                 await conn.run_sync(models.Base.metadata.create_all)
-        except Exception:
-            logger.error("Could not create tables at startup")
+        except Exception as e:
+            logger.exception("Could not create tables at startup: %s", e)
+            raise
 
         # 🔧 Inicializar roles y admin
         async_session = async_sessionmaker(database.engine, expire_on_commit=False)
