@@ -15,3 +15,4 @@ PyJWT
 passlib
 cryptography
 microservice-chassis-grupo2==0.1.17
+asyncpg~=0.29
