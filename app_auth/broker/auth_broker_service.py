@@ -22,7 +22,7 @@ from microservice_chassis_grupo2.core.rabbitmq_core import get_channel, declare_
 logger = logging.getLogger(__name__)
 
 # =============================================================================
-# Constantes RabbitMQ (routing keys)
+# Constantes RabbitMQ (routing keys / colas / topics)
 # =============================================================================
 
 # Estados válidos publicados por Auth
