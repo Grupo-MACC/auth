@@ -16,21 +16,10 @@ router = APIRouter(
 )
 security = HTTPBasic()
 
-@router.get(
-    "/health",
-    summary="Health check endpoint",
-    response_model=schemas.HealthResponse,
-)
-async def health_check():
-    """Endpoint to check if everything started correctly."""
-    logger.debug("GET '/auth/health' endpoint called.")
-    hostname = socket.gethostname()
-    ip_address = socket.gethostbyname(hostname)
-    return {
-        "detail": "OK",
-        "replica": hostname,
-        "ip": ip_address
-    }
+@router.get("/health", include_in_schema=False)
+async def health() -> dict:
+    """ Healthcheck LIVENESS (para Consul / balanceadores). """
+    return {"detail": "OK"}
 
 @router.post("/login", summary="Login con Basic Auth", response_model=dict)
 async def login(credentials: HTTPBasicCredentials = Depends(security)):

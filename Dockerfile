@@ -25,11 +25,17 @@ ENV PAYMENT_SERVICE=https://payment
 ENV AUTH_SERVICE=https://auth
 # Consul Service Discovery
 ENV CONSUL_HOST=consul
-ENV CONSUL_PORT=8500
+ENV CONSUL_PORT=8501
+ENV CONSUL_SCHEME=https
+ENV CONSUL_CA_FILE=/certs/ca.pem
+
 ENV SERVICE_NAME=auth
 ENV SERVICE_PORT=5004
 # SERVICE_ID se genera dinámicamente en main.py con UUID para cada réplica
+ENV SERVICE_HEALTH_PATH=/${SERVICE_NAME}/health
 
+ENV SERVICE_CERT_FILE=/certs/auth/auth-cert.pem
+ENV SERVICE_KEY_FILE=/certs/auth/auth-key.pem
 
 # Create a non root user and keys directory
 RUN useradd -u 1000 -d /home/pyuser -m pyuser && \
