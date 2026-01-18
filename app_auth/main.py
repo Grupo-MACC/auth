@@ -13,7 +13,7 @@ from sql import models, database
 from sql import init_db 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from broker import auth_broker_service
-from consul_client import create_consul_client
+from consul_client import get_consul_client
 
 # Configure logging
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"))
@@ -27,34 +27,35 @@ def get_container_ip():
     except Exception:
         return "127.0.0.1"
 
+async def _publish_running_delayed() -> None:
+    """
+    Publica auth.running cuando el servidor ya debería estar aceptando requests.
+
+    Por qué:
+        - Dentro del lifespan antes del yield, FastAPI aún no sirve HTTP.
+        - Los consumidores consultan Consul passing=true y pueden fallar si Auth no está ready.
+    """
+    await asyncio.sleep(1.0)
+    await auth_broker_service.publish_auth_status("running")
+
+
 # App Lifespan
 @asynccontextmanager
 async def lifespan(__app: FastAPI):
     """Lifespan context manager."""
-    consul_client = create_consul_client()
+    consul = get_consul_client()
     # Generar ID único para cada réplica
     service_id = os.getenv("SERVICE_ID", f"auth-{uuid.uuid4().hex[:8]}")
-    service_name = os.getenv("SERVICE_NAME", "auth")
-    service_port = int(os.getenv("SERVICE_PORT", 5004))
-    # Obtener IP real del contenedor para Consul
+
     container_ip = get_container_ip()
 
     try:
         logger.info(f"Starting up replica {service_id} at {container_ip}")
         
-        # Register with Consul using container IP
-        result = await consul_client.register_service(
-    
-            service_name=service_name,
-            service_id=service_id,
-            service_port=service_port,
-            service_address=container_ip,  # IP real del contenedor
-            tags=["fastapi", service_name],
-            meta={"version": "2.0.0"},
-            health_check_url=f"http://{container_ip}:{service_port}/docs"
-        )
-        logger.info(f"✅ Consul service registration: {result}")
-
+        # Registro "auto" (usa SERVICE_* y CONSUL_* desde entorno)
+        ok = await consul.register_self()
+        logger.info("✅ Consul register_self: %s", ok)
+        
         try:
             logger.info("Creating database tables")
             async with database.engine.begin() as conn:
@@ -74,6 +75,9 @@ async def lifespan(__app: FastAPI):
             logger.info("✅ Mensaje auth.running publicado correctamente")
         except Exception as e:
             logger.error(f"❌ Could not publish 'running' status: {e}", exc_info=True)
+        
+        asyncio.create_task(_publish_running_delayed())
+        
         yield
     finally:
         logger.info("Shutting down database")
@@ -83,9 +87,17 @@ async def lifespan(__app: FastAPI):
         except Exception as e:
             logger.error(f"Could not publish 'not_running' status: {e}")
         
-        # Deregister from Consul
-        result = await consul_client.deregister_service(service_id)
-        logger.info(f"✅ Consul service deregistration: {result}")
+        # Deregistro (auto) + cierre del cliente HTTP
+        try:
+            ok = await consul.deregister_self()
+            logger.info("✅ Consul deregister_self: %s", ok)
+        except Exception:
+            logger.exception("Error desregistrando en Consul")
+
+        try:
+            await consul.aclose()
+        except Exception:
+            logger.exception("Error cerrando cliente Consul")
 
 # OpenAPI Documentation
 APP_VERSION = os.getenv("APP_VERSION", "2.0.0")
@@ -106,4 +118,18 @@ app.include_router(auth_router.router)
 app.include_router(user_router.router)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=5004, reload=True)
+    """
+    Application entry point. Starts the Uvicorn server with SSL configuration.
+    Runs the FastAPI application on host.
+    """
+    cert_file = os.getenv("SERVICE_CERT_FILE", "/certs/auth/auth-cert.pem")
+    key_file = os.getenv("SERVICE_KEY_FILE", "/certs/auth/auth-key.pem")
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.getenv("SERVICE_PORT", "5004")),
+        reload=True,
+        ssl_certfile=cert_file,
+        ssl_keyfile=key_file,
+    )
