@@ -27,6 +27,18 @@ def get_container_ip():
     except Exception:
         return "127.0.0.1"
 
+async def _publish_running_delayed() -> None:
+    """
+    Publica auth.running cuando el servidor ya debería estar aceptando requests.
+
+    Por qué:
+        - Dentro del lifespan antes del yield, FastAPI aún no sirve HTTP.
+        - Los consumidores consultan Consul passing=true y pueden fallar si Auth no está ready.
+    """
+    await asyncio.sleep(1.0)
+    await auth_broker_service.publish_auth_status("running")
+
+
 # App Lifespan
 @asynccontextmanager
 async def lifespan(__app: FastAPI):
@@ -63,6 +75,9 @@ async def lifespan(__app: FastAPI):
             logger.info("✅ Mensaje auth.running publicado correctamente")
         except Exception as e:
             logger.error(f"❌ Could not publish 'running' status: {e}", exc_info=True)
+        
+        asyncio.create_task(_publish_running_delayed())
+        
         yield
     finally:
         logger.info("Shutting down database")
