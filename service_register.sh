@@ -4,8 +4,8 @@
 SERVICE_NAME="auth"
 SERVICE_ID="auth"
 SERVICE_PORT=5004
-CONSUL_HOST="10.0.11.40"  # IP del Consul agent
-CONSULT_PORT=8500
+CONSUL_HOST="10.1.11.40"  # IP del Consul agent
+CONSULT_PORT=8501
 TAGS='["auth","microservice"]'
 META='{"version":"1.0"}'
 

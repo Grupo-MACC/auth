@@ -9,11 +9,11 @@ import uvicorn
 from fastapi import FastAPI
 import asyncio
 from routers import auth_router, user_router
-from sql import models, database
+from sql import models
+from microservice_chassis_grupo2.sql import database
 from sql import init_db 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from broker import auth_broker_service
-#from microservice_chassis_grupo2.core.consul import create_consul_client
 # Configure logging
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"))
 logger = logging.getLogger(__name__)
@@ -22,11 +22,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(__app: FastAPI):
     """Lifespan context manager."""
-    '''consul = create_consul_client()
-    # Generar ID único para cada réplica
-    service_id = os.getenv("SERVICE_ID", f"auth-{uuid.uuid4().hex[:8]}")
-    service_name = os.getenv("SERVICE_NAME", "auth")
-    service_port = int(os.getenv("SERVICE_PORT", 5004))'''
+
 
     try:
         try:
@@ -59,10 +55,6 @@ async def lifespan(__app: FastAPI):
             await auth_broker_service.publish_auth_status("not_running")
         except Exception as e:
             logger.error(f"Could not publish 'not_running' status: {e}")
-        
-        # Deregister from Consul
-        #result = await consul_client.deregister_service(service_id)
-        #logger.info(f"✅ Consul service deregistration: {result}")
 
 # OpenAPI Documentation
 APP_VERSION = os.getenv("APP_VERSION", "2.0.0")
@@ -93,7 +85,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=int(os.getenv("SERVICE_PORT", "5004")),
+        port=int(os.getenv("SERVICE_PORT", "5000")),
         reload=True,
         ssl_certfile=cert_file,
         ssl_keyfile=key_file,

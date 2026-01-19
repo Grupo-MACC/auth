@@ -11,19 +11,13 @@ RUN pip install -r /requirements.txt
 # We will be working on this folder
 WORKDIR /home/pyuser/code
 ENV PYTHONPATH=/home/pyuser/code/app_auth
-ENV SQLALCHEMY_DATABASE_URL=sqlite+aiosqlite:///./auth.db
 ENV RABBITMQ_USER=guest
 ENV RABBITMQ_PASSWORD=guest
-ENV RABBITMQ_HOST=10.0.11.30
 # Claves RSA compartidas entre réplicas (volumen Docker)
 ENV PRIVATE_KEY_PATH=/home/pyuser/keys/private.pem
 ENV PUBLIC_KEY_PATH=/home/pyuser/keys/public.pem
 # Consul Service Discovery
-ENV CONSUL_HOST=10.0.11.40
-ENV CONSUL_PORT=8501
-ENV SERVICE_NAME=auth
-ENV SERVICE_PORT=5004
-ENV SERVICE_ID=auth
+ENV SERVICE_PORT=5000
 ENV CONSUL_SCHEME=https
 ENV CONSUL_CA_FILE=/certs/ca.pem
 ENV CONSUL_REGISTRATION_EVENT_URL=http://54.225.33.0:8081/restart
