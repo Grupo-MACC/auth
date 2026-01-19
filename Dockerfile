@@ -18,11 +18,14 @@ ENV PRIVATE_KEY_PATH=/home/pyuser/keys/private.pem
 ENV PUBLIC_KEY_PATH=/home/pyuser/keys/public.pem
 # Consul Service Discovery
 ENV SERVICE_PORT=5004
+ENV CONSUL_PORT=8501
 ENV CONSUL_SCHEME=https
 ENV CONSUL_CA_FILE=/certs/ca.pem
 ENV CONSUL_REGISTRATION_EVENT_URL=http://54.225.33.0:8081/restart
 ENV SERVICE_CERT_FILE=/certs/auth/auth-cert.pem
 ENV SERVICE_KEY_FILE=/certs/auth/auth-key.pem
+ENV DB_NAME=auth_db
+ENV CONSUL_HOST=10.1.11.40
 
 # Create a non root user and keys directory
 RUN useradd -u 1000 -d /home/pyuser -m pyuser && \
