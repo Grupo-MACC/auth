@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # Database #########################################################################################
 async def get_db():
     """Generates database sessions and closes them when finished."""
-    from sql.database import SessionLocal  # pylint: disable=import-outside-toplevel
+    from microservice_chassis_grupo2.sql.database import SessionLocal  # pylint: disable=import-outside-toplevel
     logger.debug("Getting database SessionLocal")
     db = SessionLocal()
     try:
