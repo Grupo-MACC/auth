@@ -3,7 +3,7 @@
 # Nombre y ID del servicio
 SERVICE_NAME="auth"
 SERVICE_ID="auth"
-SERVICE_PORT=5004
+SERVICE_PORT=5000
 CONSUL_HOST="10.1.11.40"  # IP del Consul agent
 CONSULT_PORT=8501
 TAGS='["auth","microservice"]'

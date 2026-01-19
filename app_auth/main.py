@@ -25,13 +25,16 @@ async def lifespan(__app: FastAPI):
 
 
     try:
+        logger.info("Initializing database connection")
+        await database.init_database()
+        logger.info("Database connection initialized")
+        
         try:
             logger.info("Creating database tables")
             async with database.engine.begin() as conn:
                 await conn.run_sync(models.Base.metadata.create_all)
-        except Exception as e:
-            logger.exception("Could not create tables at startup: %s", e)
-            raise
+        except Exception:
+            logger.error("Could not create tables at startup")
 
         # 🔧 Inicializar roles y admin
         async_session = async_sessionmaker(database.engine, expire_on_commit=False)
@@ -85,7 +88,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=int(os.getenv("SERVICE_PORT", "5000")),
+        port=int(os.getenv("SERVICE_PORT", "5004")),
         reload=True,
         ssl_certfile=cert_file,
         ssl_keyfile=key_file,

@@ -17,7 +17,7 @@ ENV RABBITMQ_PASSWORD=guest
 ENV PRIVATE_KEY_PATH=/home/pyuser/keys/private.pem
 ENV PUBLIC_KEY_PATH=/home/pyuser/keys/public.pem
 # Consul Service Discovery
-ENV SERVICE_PORT=5000
+ENV SERVICE_PORT=5004
 ENV CONSUL_SCHEME=https
 ENV CONSUL_CA_FILE=/certs/ca.pem
 ENV CONSUL_REGISTRATION_EVENT_URL=http://54.225.33.0:8081/restart
