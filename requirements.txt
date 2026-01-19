@@ -16,3 +16,4 @@ passlib
 cryptography
 microservice-chassis-grupo2-cc-prod
 boto3
+aiomysql
