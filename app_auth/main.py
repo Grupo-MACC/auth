@@ -25,9 +25,15 @@ async def lifespan(__app: FastAPI):
 
 
     try:
-        logger.info("Initializing database connection")
-        await database.init_database()
-        logger.info("Database connection initialized")
+        try:
+            logger.info("Initializing database connection")
+            await database.init_database()
+            logger.info("Database connection initialized")
+        except Exception as e:
+            logger.error(f"Could not initialize database connection: {e}", exc_info=True)
+            with open("/home/pyuser/code/error.txt", "w") as f:
+                f.write(f"{e}\n")
+            raise e
         
         try:
             logger.info("Creating database tables")

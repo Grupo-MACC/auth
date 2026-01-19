@@ -8,4 +8,4 @@ services:
             - "5000:5004"
         restart: on-failure
         volumes:
-            - ./certs:/auth/certs:ro
+            - ./certs:/certs:ro

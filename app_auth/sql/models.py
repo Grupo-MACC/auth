@@ -1,8 +1,7 @@
 from sqlalchemy import Column, DateTime, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from sql.database import Base
-
+from microservice_chassis_grupo2.sql.database import Base
 class BaseModel(Base):
     """Base database table representation to reuse."""
     __abstract__ = True
