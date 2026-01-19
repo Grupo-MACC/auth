@@ -1,0 +1,9 @@
+services:
+    auth:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: auth
+        ports:
+            - "5004:5004"
+        restart: on-failure

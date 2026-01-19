@@ -13,49 +13,22 @@ from sql import models, database
 from sql import init_db 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from broker import auth_broker_service
-from consul_client import get_consul_client
-
+#from microservice_chassis_grupo2.core.consul import create_consul_client
 # Configure logging
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"))
 logger = logging.getLogger(__name__)
-
-def get_container_ip():
-    """Get the container's IP address."""
-    try:
-        hostname = socket.gethostname()
-        return socket.gethostbyname(hostname)
-    except Exception:
-        return "127.0.0.1"
-
-async def _publish_running_delayed() -> None:
-    """
-    Publica auth.running cuando el servidor ya debería estar aceptando requests.
-
-    Por qué:
-        - Dentro del lifespan antes del yield, FastAPI aún no sirve HTTP.
-        - Los consumidores consultan Consul passing=true y pueden fallar si Auth no está ready.
-    """
-    await asyncio.sleep(1.0)
-    await auth_broker_service.publish_auth_status("running")
-
 
 # App Lifespan
 @asynccontextmanager
 async def lifespan(__app: FastAPI):
     """Lifespan context manager."""
-    consul = get_consul_client()
+    '''consul = create_consul_client()
     # Generar ID único para cada réplica
     service_id = os.getenv("SERVICE_ID", f"auth-{uuid.uuid4().hex[:8]}")
-
-    container_ip = get_container_ip()
+    service_name = os.getenv("SERVICE_NAME", "auth")
+    service_port = int(os.getenv("SERVICE_PORT", 5004))'''
 
     try:
-        logger.info(f"Starting up replica {service_id} at {container_ip}")
-        
-        # Registro "auto" (usa SERVICE_* y CONSUL_* desde entorno)
-        ok = await consul.register_self()
-        logger.info("✅ Consul register_self: %s", ok)
-        
         try:
             logger.info("Creating database tables")
             async with database.engine.begin() as conn:
@@ -76,7 +49,7 @@ async def lifespan(__app: FastAPI):
         except Exception as e:
             logger.error(f"❌ Could not publish 'running' status: {e}", exc_info=True)
         
-        asyncio.create_task(_publish_running_delayed())
+        #asyncio.create_task(_publish_running_delayed())
         
         yield
     finally:
@@ -87,17 +60,9 @@ async def lifespan(__app: FastAPI):
         except Exception as e:
             logger.error(f"Could not publish 'not_running' status: {e}")
         
-        # Deregistro (auto) + cierre del cliente HTTP
-        try:
-            ok = await consul.deregister_self()
-            logger.info("✅ Consul deregister_self: %s", ok)
-        except Exception:
-            logger.exception("Error desregistrando en Consul")
-
-        try:
-            await consul.aclose()
-        except Exception:
-            logger.exception("Error cerrando cliente Consul")
+        # Deregister from Consul
+        #result = await consul_client.deregister_service(service_id)
+        #logger.info(f"✅ Consul service deregistration: {result}")
 
 # OpenAPI Documentation
 APP_VERSION = os.getenv("APP_VERSION", "2.0.0")
