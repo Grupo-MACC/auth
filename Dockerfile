@@ -11,7 +11,7 @@ RUN pip install -r /requirements.txt
 # We will be working on this folder
 WORKDIR /home/pyuser/code
 ENV PYTHONPATH=/home/pyuser/code/app_auth
-ENV RABBITMQ_USER=guest
+ENV RABBITMQ_USER=user
 ENV RABBITMQ_PASSWORD=guest
 # Claves RSA compartidas entre réplicas (volumen Docker)
 ENV PRIVATE_KEY_PATH=/home/pyuser/keys/private.pem

@@ -47,14 +47,19 @@ async def lifespan(__app: FastAPI):
         async with async_session() as session:
             await init_db(session)
         
-        try:
-            logger.info("📤 Intentando publicar auth.running...")
-            await auth_broker_service.publish_auth_status("running")
-            logger.info("✅ Mensaje auth.running publicado correctamente")
-        except Exception as e:
-            logger.error(f"❌ Could not publish 'running' status: {e}", exc_info=True)
+        # Publicar auth.running con delay para asegurar que uvicorn está listo
+        # El yield marca que el startup completó, pero uvicorn no escucha hasta después
+        async def _publish_running_delayed():
+            await asyncio.sleep(10.0)  # Esperar para que uvicorn esté completamente listo
+            try:
+                logger.info("📤 Intentando publicar auth.running...")
+                await auth_broker_service.publish_auth_status("running")
+                logger.info("✅ Mensaje auth.running publicado correctamente")
+            except Exception as e:
+                logger.error(f"❌ Could not publish 'running' status: {e}", exc_info=True)
         
-        #asyncio.create_task(_publish_running_delayed())
+        # Lanzamos la tarea en background - se ejecutará después de que uvicorn esté listo
+        publish_task = asyncio.create_task(_publish_running_delayed())
         
         yield
     finally:
